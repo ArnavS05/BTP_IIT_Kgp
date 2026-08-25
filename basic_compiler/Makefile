@@ -15,12 +15,6 @@ $(TARGET): advcodegen.y advcodegen.l
 	$(LEX) -o lex.yy.c advcodegen.l
 	$(CC) $(CFLAGS) y.tab.c lex.yy.c -o $(TARGET)
 
-run: $(TARGET)
-	./$(TARGET) tests/full.tc
-
-test: $(TARGET)
-	bash tests/run_tests.sh
-
 clean:
 	rm -f $(TARGET) y.tab.c y.tab.h lex.yy.c
 	rm -rf output_*
