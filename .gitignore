@@ -1,0 +1,6 @@
+basic_compiler/lex.yy.c
+basic_compiler/y.tab.c
+basic_compiler/y.tab.h
+basic_compiler/tinyc
+output_*/
+*.o
