@@ -1,0 +1,16 @@
+scalar_registers 16
+vector_registers 16
+vector_width 256
+memory_size 1048576
+scalar_units 1
+vector_units 1
+
+integer_add_latency 1
+integer_multiply_latency 3
+integer_divide_latency 10
+float_add_latency 3
+float_multiply_latency 4
+float_divide_latency 10
+memory_latency 4
+cast_latency 2
+branch_latency 1
