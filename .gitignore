@@ -6,3 +6,4 @@ output_*/
 *.o
 tac/tac_reader
 architecture/architecture_info
+simd_optimizer/simd_optimizer
