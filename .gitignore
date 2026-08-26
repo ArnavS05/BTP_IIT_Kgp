@@ -4,3 +4,4 @@ basic_compiler/y.tab.h
 basic_compiler/tinyc
 output_*/
 *.o
+tac/tac_reader
