@@ -1,14 +1,12 @@
 CC = gcc
-CFLAGS=-std=c11 -Wall -Wextra -O0 -g
+CFLAGS = -std=c11 -Wall -Wextra -O0 -g
 LEX = flex
-YACC=bison
+YACC = bison
 TARGET = tinyc
 
-.PHONY: all compile run test clean
+.PHONY: all clean
 
-all: compile
-
-compile: $(TARGET)
+all: $(TARGET)
 
 $(TARGET): advcodegen.y advcodegen.l
 	$(YACC) -y -d -o y.tab.c advcodegen.y

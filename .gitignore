@@ -8,3 +8,4 @@ tac/tac_reader
 architecture/architecture_info
 simd_optimizer/simd_optimizer
 reg_allocator/reg_allocator
+processor_simulator/processor_simulator
