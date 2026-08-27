@@ -24,7 +24,7 @@ Architecture::Architecture() {
 }
 
 bool Architecture::set_configuration(int scalarRegs, int vectorRegs, int width) {
-    if(scalarRegs<=0 || vectorRegs<=0) return false;
+    if(scalarRegs<2 || vectorRegs<2) return false;
     if(width!=128 && width!=256 && width!=512) return false;
 
     scalarRegisters=scalarRegs;

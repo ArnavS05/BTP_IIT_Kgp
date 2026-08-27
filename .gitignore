@@ -7,3 +7,4 @@ output_*/
 tac/tac_reader
 architecture/architecture_info
 simd_optimizer/simd_optimizer
+reg_allocator/reg_allocator

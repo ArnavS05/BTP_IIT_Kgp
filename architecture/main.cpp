@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     if(argc==4) {
         if(!is_number(argv[1]) || !is_number(argv[2]) || !is_number(argv[3]) ||
            !arch.set_configuration(stoi(argv[1]),stoi(argv[2]),stoi(argv[3]))) {
-            cerr<<"Error: invalid processor configuration\n";
+            cerr<<"Error: register counts must be at least 2 and vector width must be 128, 256 or 512\n";
             usage();
             return 1;
         }

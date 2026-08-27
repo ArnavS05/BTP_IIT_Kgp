@@ -22,6 +22,7 @@ bool write_tac(const string& fileName, const vector<Instruction> &code, string &
 
 bool is_constant(const string& value);
 bool is_temporary(const string &value);
+bool is_vector_temporary(const string& value);
 bool is_label(const string& value);
 
 #endif

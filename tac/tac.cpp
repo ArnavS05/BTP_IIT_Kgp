@@ -84,8 +84,16 @@ bool is_constant(const string& value) {
 }
 
 bool is_temporary(const string &value) {
-    if(value.size()<2 || value[0]!='t') return false;
+    if(is_vector_temporary(value)) return true;
+    if(value.size()<2) return false;
+    if(value[0]!='t') return false;
     return is_integer(value.substr(1));
+}
+
+bool is_vector_temporary(const string& value) {
+    if(value.size()<3) return false;
+    if(value[0]!='v' || value[1]!='t') return false;
+    return is_integer(value.substr(2));
 }
 
 bool is_label(const string& value) {
