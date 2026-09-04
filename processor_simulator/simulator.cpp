@@ -47,7 +47,6 @@ SimulationResult::SimulationResult() {
     spillLoads=0;
     spillStores=0;
     scalarEquivalentCycles=0;
-    memoryChecksum=0;
 }
 
 bool is_type(const string& type) {
@@ -446,14 +445,14 @@ public:
         if(opcode=="DIV") answer=integer_value(x/y,type);
         else if(opcode=="REM") answer=integer_value(x%y,type);
         else if(type=="i32") {
-            uint32_t left=(uint32_t)(int32_t)x;
+            uint32_t left=(uint32_t)(int32_t)x;   // For normal 32-bit processor behaviour
             uint32_t right=(uint32_t)(int32_t)y;
             uint32_t value=0;
             if(opcode=="ADD") value=left+right;
             else if(opcode=="SUB") value=left-right;
             else if(opcode=="MUL") value=left*right;
             else return fail("invalid arithmetic opcode "+opcode);
-            answer=integer_value((int32_t)value,type);
+            answer=integer_value(value,type);
         }
         else {
             uint64_t left=(uint64_t)x;
@@ -726,16 +725,6 @@ public:
         }
     }
 
-    // Calculate final memory checksum.
-    void find_checksum() {
-        unsigned long long hash=1469598103934665603ULL;
-        for(unsigned char byte : memory) {
-            hash ^=byte;
-            hash *=1099511628211ULL;
-        }
-        result.memoryChecksum=hash;
-    }
-
     // Run instructions until HALT.
     bool run() {
         if(arch.memorySize<=0) {
@@ -755,7 +744,6 @@ public:
         }
 
         if(!halted) return fail("program ended without HALT");
-        find_checksum();
         return true;
     }
 };

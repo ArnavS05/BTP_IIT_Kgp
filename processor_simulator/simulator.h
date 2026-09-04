@@ -34,7 +34,6 @@ public:
     long long spillLoads;
     long long spillStores;
     long long scalarEquivalentCycles;
-    unsigned long long memoryChecksum;
     map<int,LineResult> lines;
 
     SimulationResult();
