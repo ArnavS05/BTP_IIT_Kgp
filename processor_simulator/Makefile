@@ -6,8 +6,8 @@ TARGET = processor_simulator
 
 all: $(TARGET)
 
-$(TARGET): main.cpp ../tac/tac.cpp ../tac/tac.h ../architecture/architecture.cpp ../architecture/architecture.h
-	$(CXX) $(CXXFLAGS) -I../tac -I../architecture main.cpp ../tac/tac.cpp ../architecture/architecture.cpp -o $(TARGET)
+$(TARGET): main.cpp simulator.cpp simulator.h ../tac/tac.cpp ../tac/tac.h ../architecture/architecture.cpp ../architecture/architecture.h
+	$(CXX) $(CXXFLAGS) -I../tac -I../architecture main.cpp simulator.cpp ../tac/tac.cpp ../architecture/architecture.cpp -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)

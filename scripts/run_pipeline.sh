@@ -147,9 +147,10 @@ echo "[3/4] Running register allocator"
 [[ -f "$OUTPUT_DIRECTORY/allocated_tac.txt" ]] || { echo "Error: allocated TAC was not created"; exit 1; }
 
 echo
-echo "[4/4] Checking processor simulator"
+echo "[4/4] Running processor simulator"
 ./processor_simulator/processor_simulator "$OUTPUT_DIRECTORY/allocated_tac.txt" \
     "$SCALAR_REGISTERS" "$VECTOR_REGISTERS" "$VECTOR_WIDTH"
+[[ -f "$OUTPUT_DIRECTORY/simulation_report.txt" ]] || { echo "Error: simulation report was not created"; exit 1; }
 
 echo
 echo "Pipeline complete"

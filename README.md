@@ -1,6 +1,6 @@
 # TinyC AVX Compiler
 
-This project compiles a restricted TinyC program into scalar three-address code, passes it through the SIMD optimizer, and performs register allocation. Finally, the processor simulator simulates the final TAC and produces timing results.
+This project compiles a restricted TinyC program into scalar three-address code, passes it through the SIMD optimizer, performs register allocation and simulates the final TAC.
 
 ## Build
 
@@ -46,5 +46,5 @@ The input must be a valid TinyC source file. The output directory is named `outp
 | `scalar_tac.txt` | Basic Compiler | Contains the typed scalar three-address |
 | `simd_tac.txt` | SIMD optimizer | Contains TAC after SIMD vectorization |
 | `allocated_tac.txt` | Register allocator | Contains TAC using physical scalar and vector registers, including any inserted spill instructions |
-| `simulation_report.txt` | Processor simulator | Contain instruction counts, cycle counts, memory operations, spills and SIMD performance information |
+| `simulation_report.txt` | Processor simulator | Contains instruction and cycle counts, memory operations, spills, estimated SIMD speedup and source-line statistics. |
 
