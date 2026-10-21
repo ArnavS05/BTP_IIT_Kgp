@@ -22,7 +22,7 @@ public:
 };
 
 bool is_branch_op(const string& opcode) {
-    return opcode.rfind("BR_",0)==0;
+    return opcode=="VDIV_CHECK" || opcode.rfind("BR_",0)==0 || opcode.rfind("VCAST_CHECK_",0)==0;
 }
 
 bool is_store_op(const string& opcode) {
@@ -179,8 +179,9 @@ public:
     }
 
     void find_temporaries() {
+        // Definitions establish types even when block layout puts a use first.
+        for(const Instruction& x : code) remember(defined_temp(x),x.type);
         for(const Instruction& x : code) {
-            remember(x.destination,x.type);
             remember(x.argument1,x.type);
             remember(x.argument2,x.type);
         }

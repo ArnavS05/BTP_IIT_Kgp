@@ -40,10 +40,13 @@ int Architecture::vector_lanes(const string& type) const {
 }
 
 int Architecture::instruction_latency(const string &opcode, const string& type) const {
+    if(opcode=="VBROADCAST" || opcode.rfind("VCAST_",0)==0) return castLatency;
+    if(opcode=="VREDUCE_ADD") return integerAddLatency;
     if(opcode=="LOAD" || opcode=="STORE" || opcode=="VLOAD" || opcode=="VSTORE")
         return memoryLatency;
     if(opcode.rfind("CAST_",0)==0) return castLatency;
-    if(opcode=="JMP" || opcode.rfind("BR_",0)==0) return branchLatency;
+    if(opcode=="VDIV_CHECK" || opcode=="JMP" || opcode.rfind("BR_",0)==0)
+        return branchLatency;
     if(opcode=="HALT") return 1;
 
     bool floating=type=="f32" || type=="f64";

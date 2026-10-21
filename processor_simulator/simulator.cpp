@@ -1,5 +1,6 @@
 #include "simulator.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -220,7 +221,7 @@ public:
         int index;
         if(!register_number(text,'v',arch.vectorRegisters,index))
             return fail("invalid vector operand "+text);
-        if((int)vectorRegisters[index].size()!=lanes)
+        if(vectorRegisters[index].empty() || (int)vectorRegisters[index].size()>lanes)
             return fail("uninitialized vector register "+text);
 
         for(Value value : vectorRegisters[index])
@@ -390,8 +391,17 @@ public:
         if(!vector_destination(x.destination,destination)) return false;
 
         int bytesPerValue=type_bytes(x.type);
-        int totalBytes=bytesPerValue*lanes;
-        if(!size_field(x.argument2,totalBytes)) return false;
+        int totalBytes;
+        if(!read_unsigned_number(x.argument2,totalBytes) || totalBytes<=0 ||
+           totalBytes>arch.vectorWidth/8 || totalBytes%bytesPerValue!=0)
+            return fail("invalid vector byte count");
+        if(is_spill(x.argument1)) {
+            if(!spillMemory.count(x.argument1)) return fail("uninitialized spill "+x.argument1);
+            totalBytes=(int)spillMemory[x.argument1].size();
+            if(totalBytes<=0 || totalBytes>arch.vectorWidth/8 || totalBytes%bytesPerValue!=0)
+                return fail("invalid vector spill size");
+        }
+        lanes=totalBytes/bytesPerValue;
 
         vector<unsigned char> bytes;
         if(!read_bytes(x.argument1,totalBytes,bytes)) return false;
@@ -410,14 +420,22 @@ public:
     bool vector_store(const Instruction& x) {
         int lanes=arch.vector_lanes(x.type);
         if(lanes<=0) return fail("invalid vector type "+x.type);
-        int totalBytes=type_bytes(x.type)*lanes;
-        if(!size_field(x.argument2,totalBytes)) return false;
+        int totalBytes;
+        int bytesPerValue=type_bytes(x.type);
+        if(!read_unsigned_number(x.argument2,totalBytes) || totalBytes<=0 ||
+           totalBytes>arch.vectorWidth/8 || totalBytes%bytesPerValue!=0)
+            return fail("invalid vector byte count");
 
         vector<Value> values;
         if(!vector_value(x.argument1,x.type,values)) return false;
+        lanes=totalBytes/bytesPerValue;
+        // Spill slots preserve the active lanes, rather than padding with fake values.
+        if(is_spill(x.destination)) lanes=(int)values.size();
+        if(lanes>(int)values.size()) return fail("vector store exceeds active lanes");
 
         vector<unsigned char> bytes;
-        for(Value value : values) {
+        for(int i=0;i<lanes;i++) {
+            Value value=values[i];
             vector<unsigned char> part=value_bytes(value);
             bytes.insert(bytes.end(),part.begin(),part.end());
         }
@@ -513,9 +531,14 @@ public:
         vector<Value> a,b,answer;
         if(!vector_value(x.argument1,x.type,a)) return false;
         if(!vector_value(x.argument2,x.type,b)) return false;
+        int lanes=(int)a.size();
+        if(!is_constant(x.argument2)) lanes=(int)b.size();
+        if(!is_constant(x.argument1) && !is_constant(x.argument2) && a.size()!=b.size())
+            return fail("vector operands have different active lanes");
+        if(lanes>(int)a.size() || lanes>(int)b.size()) return fail("invalid active lanes");
 
         string opcode=x.opcode.substr(1);
-        for(int i=0;i<(int)a.size();i++) {
+        for(int i=0;i<lanes;i++) {
             Value value;
             if(!arithmetic_value(opcode,a[i],b[i],x.type,value)) return false;
             answer.push_back(value);
@@ -591,6 +614,69 @@ public:
         return true;
     }
 
+    // Fill the active lanes with one scalar value.
+    bool vector_broadcast(const Instruction& x) {
+        int lanes,destination;
+        if(!read_unsigned_number(x.argument2,lanes) || lanes<1 ||
+           lanes>arch.vector_lanes(x.type)) return fail("invalid broadcast lane count");
+        Value value;
+        if(!scalar_value(x.argument1,x.type,value) ||
+           !vector_destination(x.destination,destination)) return false;
+        vectorRegisters[destination].assign(lanes,value);
+        return true;
+    }
+
+    // Combine integer lanes using the same modular addition as scalar TAC.
+    bool vector_reduce_add(const Instruction& x) {
+        if(x.type!="i32" && x.type!="i64") return fail("only integer reduction is supported");
+        vector<Value> values;
+        if(!vector_value(x.argument1,x.type,values)) return false;
+        Value total=values[0];
+        for(int i=1;i<(int)values.size();i++) {
+            Value next;
+            if(!arithmetic_value("ADD",total,values[i],x.type,next)) return false;
+            total=next;
+        }
+        int destination;
+        if(!scalar_destination(x.destination,destination)) return false;
+        scalarRegisters[destination]=total;
+        return true;
+    }
+
+    // A checked conversion branches before a chunk can change program memory.
+    bool vector_cast_instruction(const Instruction& x, bool check) {
+        Instruction scalar=x;
+        scalar.opcode=check ? "CAST_"+x.opcode.substr(12):x.opcode.substr(1);
+        string from,to;
+        if(!cast_types(scalar.opcode,from,to) || to!=x.type)
+            return fail("invalid vector cast");
+        vector<Value> source,answer;
+        if(!vector_value(x.argument1,from,source)) return false;
+        if((int)source.size()>arch.vector_lanes(to)) return fail("vector cast exceeds capacity");
+        for(const Value& value : source) {
+            Value converted;
+            string previous=error;
+            bool valid=cast_value(value,to,converted);
+            if(check) error=previous;
+            if(!valid) {
+                if(!check) return false;
+                result.branchesTaken++;
+                return jump_to(x.destination);
+            }
+            answer.push_back(converted);
+        }
+        if(check) {
+            result.branchesNotTaken++;
+            pc++;
+            return true;
+        }
+        int destination;
+        if(!vector_destination(x.destination,destination)) return false;
+        vectorRegisters[destination]=answer;
+        pc++;
+        return true;
+    }
+
     // Compare two scalar values.
     bool comparison(const string& opcode, const Value& a, const Value& b) {
         if(is_float_type(a.type)) {
@@ -642,7 +728,7 @@ public:
     }
 
     bool is_branch(const string& opcode) {
-        return opcode=="BR_EQ" || opcode=="BR_NE" || opcode=="BR_LT" ||
+        return opcode=="VDIV_CHECK" || opcode.rfind("VCAST_CHECK_",0)==0 || opcode=="BR_EQ" || opcode=="BR_NE" || opcode=="BR_LT" ||
                opcode=="BR_LE" || opcode=="BR_GT" || opcode=="BR_GE";
     }
 
@@ -656,9 +742,47 @@ public:
                opcode=="VDIV";
     }
 
+    // Retry scalar execution if any lane would fail division.
+    bool vector_division_check(const Instruction& x) {
+        vector<Value> a,b;
+        if(!vector_value(x.argument1,x.type,a) || !vector_value(x.argument2,x.type,b)) return false;
+        int lanes=is_constant(x.argument1) ? (int)b.size():(int)a.size();
+        if(!is_constant(x.argument1) && !is_constant(x.argument2) && a.size()!=b.size())
+            return fail("division check lane mismatch");
+        if(lanes>(int)a.size() || lanes>(int)b.size()) return fail("invalid division check lanes");
+        for(int i=0;i<lanes;i++) {
+            bool invalid;
+            if(is_float_type(x.type)) invalid=b[i].floatValue==0;
+            else {
+                long long minimum=x.type=="i32" ? numeric_limits<int32_t>::min():numeric_limits<int64_t>::min();
+                invalid=b[i].integerValue==0 || (a[i].integerValue==minimum && b[i].integerValue==-1);
+            }
+            if(invalid) {
+                result.branchesTaken++;
+                return jump_to(x.destination);
+            }
+        }
+        result.branchesNotTaken++;
+        pc++;
+        return true;
+    }
+
     // Execute one TAC instruction.
     bool execute(const Instruction& x) {
-        if(x.opcode=="LOAD") {
+        if(x.opcode=="VDIV_CHECK") return vector_division_check(x);
+        else if(x.opcode=="VBROADCAST") {
+            if(!vector_broadcast(x)) return false;
+            pc++;
+        }
+        else if(x.opcode=="VREDUCE_ADD") {
+            if(!vector_reduce_add(x)) return false;
+            pc++;
+        }
+        else if(x.opcode.rfind("VCAST_CHECK_",0)==0)
+            return vector_cast_instruction(x,true);
+        else if(x.opcode.rfind("VCAST_",0)==0)
+            return vector_cast_instruction(x,false);
+        else if(x.opcode=="LOAD") {
             if(!scalar_load(x)) return false;
             pc++;
         }
@@ -700,9 +824,23 @@ public:
 
     // Update timing and instruction counts.
     void count_instruction(const Instruction& x) {
-        int latency=arch.instruction_latency(x.opcode,x.type);
-        bool vectorInstruction=!x.opcode.empty() && x.opcode[0]=='V';
+        long long latency=arch.instruction_latency(x.opcode,x.type);
         bool control=is_branch(x.opcode) || x.opcode=="JMP" || x.opcode=="HALT";
+        bool vectorInstruction=!control && !x.opcode.empty() && x.opcode[0]=='V';
+        int active=arch.vector_lanes(x.type), index;
+        if(register_number(x.destination,'v',arch.vectorRegisters,index))
+            active=(int)vectorRegisters[index].size();
+        else if(register_number(x.argument1,'v',arch.vectorRegisters,index))
+            active=(int)vectorRegisters[index].size();
+        else if(register_number(x.argument2,'v',arch.vectorRegisters,index))
+            active=(int)vectorRegisters[index].size();
+        if(x.opcode=="VSTORE" && is_constant(x.argument1)) {
+            int bytes;
+            if(read_unsigned_number(x.argument2,bytes)) active=bytes/type_bytes(x.type);
+        }
+        if(x.opcode=="VREDUCE_ADD") latency=(long long)arch.integerAddLatency*max(1,active-1);
+        if(x.opcode.rfind("VCAST_CHECK_",0)==0) latency=(long long)arch.castLatency*max(1,active);
+        if(x.opcode=="VDIV_CHECK") latency=(long long)arch.branchLatency*max(1,active);
 
         result.totalInstructions++;
         result.totalCycles +=latency;
@@ -712,7 +850,8 @@ public:
         else if(control) result.controlInstructions++;
         else result.scalarInstructions++;
 
-        int lanes=vectorInstruction ? arch.vector_lanes(x.type) : 1;
+        int lanes=vectorInstruction ? active : 1;
+        if(x.opcode=="VREDUCE_ADD") lanes=1;
         if(lanes<1) lanes=1;
         result.scalarEquivalentCycles +=(long long)latency*lanes;
 
