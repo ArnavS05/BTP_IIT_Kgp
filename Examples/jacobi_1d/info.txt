@@ -1,0 +1,24 @@
+TINY C COMPILER INFORMATION
+
+Source file: jacobi_1d.tc
+Maximum alignment: 8 bytes
+
+TYPE TABLE
+
+ID     Size     Align    Category     Description
+0      4        4        Basic        int
+1      8        8        Basic        long
+2      4        4        Basic        float
+3      8        8        Basic        double
+4      4096     4        Array        array(1024,float)
+
+SYMBOL TABLE 0: main
+
+Name                     Offset     Size       Type
+a                        0          4096       array(1024,float)
+b                        4096       4096       array(1024,float)
+third                    8192       4          float
+i                        8196       4          int
+step                     8200       4          int
+
+Total size: 8204 bytes

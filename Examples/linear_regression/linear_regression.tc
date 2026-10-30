@@ -1,0 +1,33 @@
+int x[4090],y[4090];
+long sumX,sumY,sumXX,sumXY;
+double numerator,denominator,slope,intercept;
+int i;
+
+// Points near the line y=3*x+7.
+i=0;
+while(i<4090) {
+    x[i]=i%101-50;
+    y[i] =3*x[i]+7+(i%7-3);
+    i=i+1;
+}
+
+sumX=0;
+sumY =0;
+sumXX=0;
+sumXY =0;
+
+// Four independent integer reductions.
+i=0;
+while(i<4090) {
+    sumX =sumX+x[i];
+    sumY=sumY+y[i];
+    sumXX =sumXX+x[i]*x[i];
+    sumXY=sumXY+x[i]*y[i];
+    i=i+1;
+}
+
+// Least-squares slope and intercept.
+numerator=4090*sumXY-sumX*sumY;
+denominator =4090*sumXX-sumX*sumX;
+slope=numerator/denominator;
+intercept =(sumY-slope*sumX)/4090;

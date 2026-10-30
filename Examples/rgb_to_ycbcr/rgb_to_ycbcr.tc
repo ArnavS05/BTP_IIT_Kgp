@@ -1,0 +1,35 @@
+float r[1024],g[1024],b[1024];
+float y[1024],cb[1024],cr[1024];
+float kr,kg,kb,blueScale,redScale,offset;
+int i,pass;
+
+// Full-range, BT.601-based floating-point conversion.
+kr=0.299;
+kg =0.587;
+kb=0.114;
+blueScale=0.564334085778781;
+redScale =0.713266761768902;
+offset=128.0;
+
+// Separate colour planes keep each stream contiguous.
+i=0;
+while(i<1024) {
+    r[i]=i%256;
+    g[i] =(3*i+17)%256;
+    b[i]=(5*i+29)%256;
+    i=i+1;
+}
+
+// Repeat conversion to amortize input initialization.
+pass=0;
+while(pass<4) {
+    i=0;
+    while(i<1024) {
+        y[i] =kr*r[i]+kg*g[i]+kb*b[i];
+        cb[i]=(b[i]-y[i])*blueScale+offset;
+        cr[i] =(r[i]-y[i])*redScale+offset;
+        i=i+1;
+    }
+    pass =pass+1;
+}
+

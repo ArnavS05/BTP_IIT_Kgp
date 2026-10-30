@@ -1,0 +1,45 @@
+PROCESSOR SIMULATION REPORT
+
+Configuration
+Scalar registers: 16
+Vector registers: 16
+Vector width: 256 bits
+Memory size: 1048576 bytes
+Execution model: in-order, single-issue
+
+Execution summary
+Total instructions: 306799
+Total cycles: 912230
+Stall cycles: 605431
+Scalar instructions: 290434
+Vector instructions: 0
+Control instructions: 16365
+Memory operations: 139083
+Branches taken: 8180
+Branches not taken: 2
+Spill loads: 0
+Spill stores: 0
+Estimated SIMD speedup: 1.0000x
+
+Source-line information
+Line        Instructions    Cycles      Scalar      Vector
+7           1               4           1           0
+8           12273           24546       4091        0
+9           28630           110430      28630       0
+10          57260           179960      57260       0
+11          12270           36810       12270       0
+14          2               6           2           0
+15          2               6           2           0
+16          2               6           2           0
+17          2               6           2           0
+20          1               4           1           0
+21          12273           24546       4091        0
+22          32720           94070       32720       0
+23          32720           94070       32720       0
+24          53170           155420      53170       0
+25          53170           155420      53170       0
+26          12270           36810       12270       0
+30          9               27          9           0
+31          9               27          9           0
+32          4               22          4           0
+33          10              39          10          0

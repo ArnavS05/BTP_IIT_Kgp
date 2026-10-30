@@ -1,0 +1,30 @@
+TINY C COMPILER INFORMATION
+
+Source file: linear_regression.tc
+Maximum alignment: 8 bytes
+
+TYPE TABLE
+
+ID     Size     Align    Category     Description
+0      4        4        Basic        int
+1      8        8        Basic        long
+2      4        4        Basic        float
+3      8        8        Basic        double
+4      16360    4        Array        array(4090,int)
+
+SYMBOL TABLE 0: main
+
+Name                     Offset     Size       Type
+x                        0          16360      array(4090,int)
+y                        16360      16360      array(4090,int)
+sumX                     32720      8          long
+sumY                     32728      8          long
+sumXX                    32736      8          long
+sumXY                    32744      8          long
+numerator                32752      8          double
+denominator              32760      8          double
+slope                    32768      8          double
+intercept                32776      8          double
+i                        32784      4          int
+
+Total size: 32788 bytes

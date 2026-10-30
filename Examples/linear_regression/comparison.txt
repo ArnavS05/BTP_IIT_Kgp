@@ -1,0 +1,4 @@
+Scalar cycles: 912230
+SIMD cycles: 492282
+Measured SIMD speedup: 1.8531x
+Cycle reduction: 46.04%

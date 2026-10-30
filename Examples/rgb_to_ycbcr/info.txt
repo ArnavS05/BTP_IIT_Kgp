@@ -1,0 +1,33 @@
+TINY C COMPILER INFORMATION
+
+Source file: rgb_to_ycbcr.tc
+Maximum alignment: 8 bytes
+
+TYPE TABLE
+
+ID     Size     Align    Category     Description
+0      4        4        Basic        int
+1      8        8        Basic        long
+2      4        4        Basic        float
+3      8        8        Basic        double
+4      4096     4        Array        array(1024,float)
+
+SYMBOL TABLE 0: main
+
+Name                     Offset     Size       Type
+r                        0          4096       array(1024,float)
+g                        4096       4096       array(1024,float)
+b                        8192       4096       array(1024,float)
+y                        12288      4096       array(1024,float)
+cb                       16384      4096       array(1024,float)
+cr                       20480      4096       array(1024,float)
+kr                       24576      4          float
+kg                       24580      4          float
+kb                       24584      4          float
+blueScale                24588      4          float
+redScale                 24592      4          float
+offset                   24596      4          float
+i                        24600      4          int
+pass                     24604      4          int
+
+Total size: 24608 bytes
